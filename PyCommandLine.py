@@ -11,7 +11,6 @@ class CmdInterpreter():
 		 self.directory = os.getcwd()
 
 	def interpret(self, line):
-		output = ""
 		self.hist.append(line)
 		commands = line.split('|')
 		if not line:
@@ -64,7 +63,11 @@ class CmdInterpreter():
 		elif(command[0] == "wc"):
 			self.executeWc(command)
 		elif(command[0] == "diff"):
-			self.executeDiff(command)
+			self.executeDiff(command)		
+		elif(command[0] == "history"):
+			self.executeHistory(command)		
+		elif(command[0] == "h"):
+			self.executeHistory(command)
 		else:
 			print("command not found")
 		return
@@ -135,6 +138,16 @@ class CmdInterpreter():
 		else:
 		 os.execvp('/usr/bin/diff', ['diff'])
 
+	def executeHistory(self, arg):
+		"""If re-executing historic command
+		IMPLEMENT: testing for invalid input"""
+		if (len(arg) > 1): 
+			output = self.interpret(self.hist[(int(arg[1])-1)])
+		else:
+			i=1;
+			for line in self.hist:
+				print(str(i) + ": " + line)
+		os.kill(os.getpid(), 1)
 
 
 def main():
