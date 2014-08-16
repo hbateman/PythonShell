@@ -59,6 +59,8 @@ class CmdInterpreter():
 			self.executeCd(command)
 		elif(command[0] == "ls"):
 			self.executeLs(command)
+		elif(command[0] == "ps"):
+			self.executePs(command)
 		else:
 			print("command not found")
 		return
@@ -111,6 +113,11 @@ class CmdInterpreter():
 		else:
 		 os.execvp('/bin/ls', ['ls'])
 
+	def executePs(self, arg):
+		if (len(arg) > 1):
+			os.execvp('/bin/ps', ['ps', arg[1]])
+		else:
+		 os.execvp('/bin/ps', ['ps'])
 
 
 
