@@ -18,12 +18,19 @@ class CmdInterpreter():
 			output = ""
 		elif (self.checkPipes(commands)):
 			output = "Invalid use of pipe '|'."
-		elif(len(commands) == 1):
-			command = self.parseCommand(line)
-			output = self.executeCommand(command)
-		if(len(output) == 0):
-			return
-		print(output)
+		elif (len(commands) == 1):
+			pid = os.fork()
+			if (pid == 0):
+				self.executeCommand(self.parseCommand(commands[0]))
+			else:
+				os.waitpid(pid, 0)
+		else:
+			pid = os.fork()
+			if (pid == 0):
+				self.execute(commands)
+			else:
+				os.waitpid(pid, 0)
+		return
 
 	def checkPipes(self, line):
 		for x in line:
@@ -49,65 +56,44 @@ class CmdInterpreter():
 		elif(command[0] == "pwd"):
 			output = self.executePwd()
 		elif(command[0] == "cd"):
-			if(len(command) == 1):
-				self.executeCd([command[0]])
-			else:
-				self.executeCd(command)
-			output = ""
+			self.executeCd(command)
 		elif(command[0] == "ls"):
-			if(len(command) == 1):
-				output = self.executeLs(['ls'])
-			else:
-				output = self.executeLs(['ls',command[1]])
+			self.executeLs(command)
 		else:
-			output = "LIES!"
-		return output
+			print("command not found")
+		return
+
+	def execute(self, commands):
+		if (len(commands) > 1):
+			r, w = os.pipe()
+			pid = os.fork()
+			if (pid == 0):
+				os.close(1)
+				os.dup2(w, 1)
+				os.close(r)
+				os.close(w)
+				command = commands[0]
+				self.executeCommand(self.parseCommand(command))
+			else:
+				os.close(1)
+				os.dup2(w, 1)
+				os.close(r)
+				os.close(w)
+				os.waitpid(pid, 0)
+				out = sys.stdin.read()
+				commands.remove(commands[0])
+				nextIn = " " + out
+				commands[0] += nextIn
+				self.execute(commands)
+		else:
+			command = commands[0]
+			self.executeCommand(self.parseCommand(command))
 
 	def executeEcho(self, arg):
-		pStdin = os.dup(0)
-		pStdout = os.dup(1)
-		r, w= os.pipe()
-		pid = os.fork()
-		if (pid == 0):
-			os.close(1)
-			os.dup2(w, 1)
-			os.close(r)
-			os.close(w)
-			os.execvp('/bin/echo', ['echo', arg])
-		else:
-			os.close(0)
-			os.dup2(r, 0)
-			os.close(r)
-			os.close(w)
-			os.waitpid(pid, 0)
-			line = input()
-			os.dup2(pStdin, 0)
-			os.dup2(pStdout, 1)
-			return line
+		os.execvp('/bin/echo', ['echo', arg])
 
 	def executePwd(self):
-		pStdin = os.dup(0)
-		pStdout = os.dup(1)
-		r, w= os.pipe()
-		pid = os.fork()
-		if (pid == 0):
-			os.close(1)
-			os.dup2(w, 1)
-			os.close(r)
-			os.close(w)
-			os.execvp('/bin/pwd', ['/bin/pwd'])
-		else:
-			os.close(0)
-			os.dup2(r, 0)
-			os.close(r)
-			os.close(w)
-			os.waitpid(pid, 0)
-			line = ""
-			for x in input():
-				line += x
-			os.dup2(pStdin, 0)
-			os.dup2(pStdout, 1)
-			return line
+		os.execvp('/bin/pwd', ['/bin/pwd'])
 
 	def executeCd(self, arg):
 		if (len(arg) == 1):
@@ -120,27 +106,10 @@ class CmdInterpreter():
 				print("cd: '", arg, "': No such file or directory", sep='')
 
 	def executeLs(self, arg):
-		pStdin = os.dup(0)
-		pStdout = os.dup(1)
-		r, w= os.pipe()
-		print(arg)
-		pid = os.fork()
-		if (pid == 0):
-			os.close(1)
-			os.dup2(w, 1)
-			os.close(r)
-			os.close(w)
-			os.execvp('/bin/ls', arg)
+		if (len(arg) > 1):
+			os.execvp('/bin/ls', ['ls', arg[1]])
 		else:
-			os.close(0)
-			os.dup2(r, 0)
-			os.close(r)
-			os.close(w)
-			os.waitpid(pid, 0)
-			line = input()
-			os.dup2(pStdin, 0)
-			os.dup2(pStdout, 1)
-			return line
+		 os.execvp('/bin/ls', ['ls'])
 
 
 
