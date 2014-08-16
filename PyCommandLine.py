@@ -42,16 +42,11 @@ class CmdInterpreter():
 		splitLine.whitespace_split = False
 		splitLine.wordchars += '#$+-,./?@^= '
 		listCommand = list(splitLine)
-		if (len(listCommand) > 1):
-			args = listCommand[1]
-			for i in range(2, len(listCommand)):
-				args += listCommand[i]
-				return [listCommand[0], args]
 		return listCommand
 
 	def executeCommand(self, command):
 		if(command[0] == "echo"):
-			output = self.executeEcho(command[1])
+			output = self.executeEcho(command)
 		elif(command[0] == "pwd"):
 			output = self.executePwd()
 		elif(command[0] == "cd"):
@@ -91,18 +86,18 @@ class CmdInterpreter():
 				os.waitpid(pid, 0)
 				out = sys.stdin.read()
 				commands.remove(commands[0])
-				nextIn = " " + out
-				commands[0] += nextIn
+				nextArgs = " " + out
+				commands[0] += nextArgs
 				self.execute(commands)
 		else:
 			command = commands[0]
 			self.executeCommand(self.parseCommand(command))
 
 	def executeEcho(self, arg):
-		os.execvp('/bin/echo', ['echo', arg])
+		os.execvp('/bin/echo', arg)
 
 	def executePwd(self):
-		os.execvp('/bin/pwd', ['/bin/pwd'])
+		os.execvp('/bin/pwd', arg)
 
 	def executeCd(self, arg):
 		if (len(arg) == 1):
@@ -111,32 +106,21 @@ class CmdInterpreter():
 		else:
 			try:
 				os.chdir(arg[1])
-			except OSError:
+			except OSError as e:
 				print("cd: '", arg, "': No such file or directory", sep='')
+				"""print(e.args)"""
 
 	def executeLs(self, arg):
-		if (len(arg) > 1):
-			os.execvp('/bin/ls', ['ls', arg[1]])
-		else:
-		 os.execvp('/bin/ls', ['ls'])
+		os.execvp('/bin/ls', arg)
 
 	def executePs(self, arg):
-		if (len(arg) > 1):
-			os.execvp('/bin/ps', ['ps', arg[1]])
-		else:
-		 os.execvp('/bin/ps', ['ps'])
+		os.execvp('/bin/ps', arg)
 
 	def executeWc(self, arg):
-		if (len(arg) > 1):
-			os.execvp('/usr/bin/wc', ['wc', arg[1]])
-		else:
-		 os.execvp('/usr/bin/wc', ['wc'])
+		os.execvp('/usr/bin/wc', arg)
 
 	def executeDiff(self, arg):
-		if (len(arg) > 1):
-			os.execvp('/usr/bin/diff', ['diff', arg[1]])
-		else:
-		 os.execvp('/usr/bin/diff', ['diff'])
+		os.execvp('/usr/bin/diff', arg)
 
 	def executeHistory(self, arg):
 		"""If re-executing historic command
@@ -146,7 +130,7 @@ class CmdInterpreter():
 		else:
 			i=1;
 			for line in self.hist:
-				print(str(i) + ": " + line)
+				sys.stdout.write(str(i) + ": " + line)
 		os.kill(os.getpid(), 1)
 
 
