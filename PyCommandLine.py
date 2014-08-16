@@ -10,13 +10,15 @@ class CmdInterpreter():
 		 """retrieve current directory upon startup of shell"""
 		 self.directory = os.getcwd()
 
+	"""Interpret a line of code, decide how to execute"""
 	def interpret(self, line):
 		self.hist.append(line)
 		commands = line.split('|')
 		if not line:
 			output = ""
 		elif (self.checkPipes(commands)):
-			output = "Invalid use of pipe '|'."
+			print("Invalid use of pipe '|'.")
+			return
 		elif (len(commands) == 1):
 			pid = os.fork()
 			if (pid == 0):
@@ -31,12 +33,14 @@ class CmdInterpreter():
 				os.waitpid(pid, 0)
 		return
 
+	"""Check valid use of pipes"""
 	def checkPipes(self, line):
 		for x in line:
 			if (len(x) == 0):
 				return True
 		return False
 
+	"""Parse a command"""
 	def parseCommand(self, line):
 		splitLine = shlex.shlex(line, posix=True)
 		splitLine.whitespace_split = False
@@ -44,6 +48,7 @@ class CmdInterpreter():
 		listCommand = list(splitLine)
 		return listCommand
 
+	"""detirmine which command"""
 	def executeCommand(self, command):
 		if(command[0] == "echo"):
 			output = self.executeEcho(command)
@@ -69,6 +74,7 @@ class CmdInterpreter():
 			print("command not found")
 		return
 
+	"""Recursive function for case whe npipes are used"""
 	def execute(self, commands):
 		if (len(commands) > 1):
 			r, w = os.pipe()
