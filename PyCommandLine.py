@@ -63,6 +63,8 @@ class CmdInterpreter():
 			self.executePs(command)
 		elif(command[0] == "wc"):
 			self.executeWc(command)
+		elif(command[0] == "diff"):
+			self.executeDiff(command)
 		else:
 			print("command not found")
 		return
@@ -126,6 +128,12 @@ class CmdInterpreter():
 			os.execvp('/usr/bin/wc', ['wc', arg[1]])
 		else:
 		 os.execvp('/usr/bin/wc', ['wc'])
+
+	def executeDiff(self, arg):
+		if (len(arg) > 1):
+			os.execvp('/usr/bin/diff', ['diff', arg[1]])
+		else:
+		 os.execvp('/usr/bin/diff', ['diff'])
 
 
 
