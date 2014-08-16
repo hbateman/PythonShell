@@ -48,7 +48,7 @@ class CmdInterpreter():
 		if(command[0] == "echo"):
 			output = self.executeEcho(command)
 		elif(command[0] == "pwd"):
-			output = self.executePwd()
+			output = self.executePwd(command)
 		elif(command[0] == "cd"):
 			self.executeCd(command)
 		elif(command[0] == "ls"):
@@ -57,6 +57,8 @@ class CmdInterpreter():
 			self.executePs(command)
 		elif(command[0] == "wc"):
 			self.executeWc(command)
+		elif(command[0] == "grep"):
+			self.executeGrep(command)
 		elif(command[0] == "diff"):
 			self.executeDiff(command)		
 		elif(command[0] == "history"):
@@ -79,15 +81,12 @@ class CmdInterpreter():
 				command = commands[0]
 				self.executeCommand(self.parseCommand(command))
 			else:
-				os.close(1)
-				os.dup2(w, 1)
+				os.close(0)
+				os.dup2(r, 0)
 				os.close(r)
 				os.close(w)
 				os.waitpid(pid, 0)
-				out = sys.stdin.read()
 				commands.remove(commands[0])
-				nextArgs = " " + out
-				commands[0] += nextArgs
 				self.execute(commands)
 		else:
 			command = commands[0]
@@ -96,18 +95,17 @@ class CmdInterpreter():
 	def executeEcho(self, arg):
 		os.execvp('/bin/echo', arg)
 
-	def executePwd(self):
+	def executePwd(self, arg):
 		os.execvp('/bin/pwd', arg)
 
 	def executeCd(self, arg):
 		if (len(arg) == 1):
-			"""Not Currently Working"""
-			self.executeCd(self.directory)
+			self.executeCd(['cd', self.directory])
 		else:
 			try:
 				os.chdir(arg[1])
 			except OSError as e:
-				print("cd: '", arg, "': No such file or directory", sep='')
+				print("cd: '", arg[1], "': No such file or directory", sep = '')
 				"""print(e.args)"""
 
 	def executeLs(self, arg):
@@ -122,15 +120,24 @@ class CmdInterpreter():
 	def executeDiff(self, arg):
 		os.execvp('/usr/bin/diff', arg)
 
+	def executeGrep(self, arg):
+		os.execvp('/bin/grep', arg)
+
 	def executeHistory(self, arg):
 		"""If re-executing historic command
 		IMPLEMENT: testing for invalid input"""
-		if (len(arg) > 1): 
-			output = self.interpret(self.hist[(int(arg[1])-1)])
+		if (len(arg) > 1):
+			print(self.hist)
+			self.hist[len(self.hist)-1] = self.hist[(int(arg[1])-1)]
+			print(self.hist)
+			self.interpret(self.hist[(int(arg[1])-1)])
 		else:
+			print(self.hist)
 			i=1;
 			for line in self.hist:
-				sys.stdout.write(str(i) + ": " + line)
+				sys.stdout.write(str(i) + ": " + line + '\n')
+				i = i + 1
+			sys.stdout.flush()
 		os.kill(os.getpid(), 1)
 
 
