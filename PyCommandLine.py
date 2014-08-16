@@ -61,6 +61,8 @@ class CmdInterpreter():
 			self.executeLs(command)
 		elif(command[0] == "ps"):
 			self.executePs(command)
+		elif(command[0] == "wc"):
+			self.executeWc(command)
 		else:
 			print("command not found")
 		return
@@ -118,6 +120,12 @@ class CmdInterpreter():
 			os.execvp('/bin/ps', ['ps', arg[1]])
 		else:
 		 os.execvp('/bin/ps', ['ps'])
+
+	def executeWc(self, arg):
+		if (len(arg) > 1):
+			os.execvp('/usr/bin/wc', ['wc', arg[1]])
+		else:
+		 os.execvp('/usr/bin/wc', ['wc'])
 
 
 
