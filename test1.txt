@@ -1,0 +1,2 @@
+ls -l
+ps -o state,pid,ppid,wchan,command
