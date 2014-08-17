@@ -6,6 +6,7 @@ class CmdInterpreter():
 	hist = []
 	directory = ""
 	processes = []
+	amper = False
 
 	def __init__(self):
 		 """retrieve current directory upon startup of shell"""
@@ -13,15 +14,15 @@ class CmdInterpreter():
 
 	"""Interpret a line of code, decide how to execute"""
 	def interpret(self, line):
-		amper = False
+		self.amper = False
 		self.hist.append(line)
+		if not line:
+			return
 		if (line[len(line)-1] == "&"):
-			amper = True
+			self.amper = True
 			line = line.replace('&', '')
 		commands = line.split('|')
-		if not line:
-			output = ""
-		elif (self.checkPipes(commands)):
+		if (self.checkPipes(commands)):
 			print("Invalid use of pipe '|'.")
 			return
 		else:
@@ -29,7 +30,7 @@ class CmdInterpreter():
 			if (pid == 0):
 				self.execute(commands)
 			else:
-				if (amper == True):
+				if (self.amper == True):
 					self.processes.append(pid)
 					print("[" + str(self.processes.index(pid)+1) + "]" + " " + str(pid))
 					return
@@ -56,15 +57,13 @@ class CmdInterpreter():
 	def executeCommand(self, command):
 		if(command[0] == "cd"):
 			self.executeCd(command)
-		elif(command[0] == "history"):
-			self.executeHistory(command)		
-		elif(command[0] == "h"):
+		elif(command[0] == "history" or command[0] == "h"):
 			self.executeHistory(command)
 		else:
 			self.executeNorm(command)
 		return
 
-	"""Recursive function for case whe npipes are used"""
+	"""Recursive function for case when pipes are used"""
 	def execute(self, commands):
 		if (len(commands) > 1):
 			r, w = os.pipe()
@@ -86,10 +85,17 @@ class CmdInterpreter():
 				self.execute(commands)
 		else:
 			command = commands[0]
+			if (self.amper == True):
+				f = open(os.devnull, 'w')
+				os.dup2(f.fileno(), 1)
+				os.close(f.fileno())
 			self.executeCommand(self.parseCommand(command))
 
 	def executeNorm(self, arg):
-		os.execvp(arg[0], arg)
+		try:
+			os.execvp(arg[0], arg)
+		except FileNotFoundError:
+			print("command not found")
 
 	def executeCd(self, arg):
 		if (len(arg) == 1):
