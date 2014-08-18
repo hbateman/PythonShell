@@ -1,6 +1,8 @@
 import os, shlex, sys, subprocess
 
-"""The CmdInterpreter class will interprent commands and return output"""
+"""Hugo Bateman - 5602043"""
+
+"""The psh class will interprent commands and return output"""
 class psh():
 
 	hist = []
@@ -35,7 +37,7 @@ class psh():
 				self.execute(commands)
 			else:
 				if (self.amper == True):
-					self.currentJobs.append(Job(line, pid, (len(self.currentJobs))+1))
+					self.currentJobs.append(Job(input, pid, (len(self.currentJobs))+1))
 					print("[" + str(len(self.currentJobs)) + "]" + " " + str(pid))
 					return
 				else:
@@ -57,6 +59,7 @@ class psh():
 		listCommand = list(splitLine)
 		return listCommand
 
+	"""Detrmine which single command was called"""
 	def executeSingle(self, command):
 		cmd = self.parseCommand(command[0])
 		if(cmd[0] == "cd"):
@@ -78,7 +81,7 @@ class psh():
 					os.waitpid(pid, 0)
 		return
 
-	"""detirmine which command"""
+	"""detirmine which command was called"""
 	def executeCommand(self, command):
 		if(command[0] == "cd"):
 			self.executeCd(command, False)
@@ -90,13 +93,14 @@ class psh():
 			self.executeNorm(command)
 		return
 
+	"""Check the current status of the running processes"""
 	def checkJobs(self):
 		for j in self.currentJobs:
 			ps = subprocess.Popen(['ps', '-p', str(j.pid), '-o', 'state='], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 			result, error = ps.communicate()
 			if (result.decode()[0] == "Z"):
+				os.waitpid(j.pid, 0)
 				self.currentJobs.remove(j)
-				ps.wait()
 
 	"""Recursive function for case when pipes are used"""
 	def execute(self, commands):
@@ -122,16 +126,19 @@ class psh():
 			command = commands[0]
 			self.executeCommand(self.parseCommand(command))
 
+	"""execute a normal function"""
 	def executeNorm(self, arg):
 		try:
 			os.execvp(arg[0], arg)
 		except FileNotFoundError:
 			print("command not found")
 
+	"""print the current working directory"""
 	def executePwd(self):
 		print(os.getcwd())
 		return
 
+	"""execute the cd command"""
 	def executeCd(self, arg, isSingle):
 		if (len(arg) == 1):
 			self.executeCd(['cd', self.directory], isSingle)
@@ -146,6 +153,7 @@ class psh():
 			os.kill(os.getpid(), 1)
 
 
+	"""execute the history command"""
 	def executeHistory(self, arg, isSingle):
 		if (len(arg) > 1):
 			self.hist.remove(self.hist[len(self.hist)-1])
@@ -161,6 +169,7 @@ class psh():
 		else:
 			os.kill(os.getpid(), 1)
 
+	"""execute the jobs command"""
 	def executeJobs(self, arg):
 		for j in self.currentJobs:
 			ps = subprocess.Popen(['ps', '-p', str(j.pid), '-o', 'state='], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -168,6 +177,7 @@ class psh():
 			if result.decode() != '':
 				print('[{}] <{}> {}'.format(j.number, self.STATES[result.decode()[0]], j.command))
 
+"""Job objects are used to keep track of the currently running jobs"""
 class Job():
 	command = ""
 	status = ""
